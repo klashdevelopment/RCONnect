@@ -35,9 +35,24 @@ app.get('/', (req, res) => {
 app.get('/sendCommand', async (req, res) => {
     let command = req.query.command;
     let response = await client.send(command);
-    console.log(response);
     res.send({ command: command, output: response });
 });
+
+// POST /post-inventory will give us a string[]. We need to store this, give it an ID, and return the ID.
+let inventories = [];
+let id = 0;
+app.get('/post-inventory', (req, res) => {
+    let inventory = JSON.parse(req.query.inv);
+    inventories.push(inventory);
+    res.status(200).send(""+id+"");
+    id++;
+});
+// GET /get-inventory?id=0 will return the inventory with ID 0.
+app.get('/get-inventory', (req, res) => {
+    let id = req.query.id;
+    res.status(200).send(inventories[id]);
+});
+
 app.listen(6304, () => {
     console.log("[rconnect-server] Server started on port 6304.");
 });

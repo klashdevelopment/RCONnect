@@ -1,11 +1,11 @@
 'use client';
-import { Input, Button, CssVarsProvider, Sheet, Select, Option, Modal, ModalClose, ModalDialog, Typography } from "@mui/joy";
+import { Input, Button, Autocomplete, CssVarsProvider, Sheet, Select, Option, Modal, ModalClose, ModalDialog, Typography } from "@mui/joy";
 import Image from "next/image";
 import { useState } from "react";
 import McText from './mctext/McText.jsx';
-import { Cached, Chat, Inventory, Explore } from '@mui/icons-material';
+import { Cached, Chat, Inventory, Explore, DeleteForever, Hiking, DownhillSkiing, Money, Visibility, ExitToApp, Block, Gradient, ColorLens } from '@mui/icons-material';
 import JSON5 from 'json5';
-import items from "./items.jsx";
+import items from "./items";
 
 const colors = [
   ["#000000", "black"],
@@ -52,10 +52,21 @@ export default function Home() {
 
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [messageInvError, setMessageInvError] = useState("");
-  const [giveItem, setGiveItem] = useState("");
-  const [inventory, setInventory] = useState<string[]>(
-    ["dirt","stone","stone","cobblestone","cobblestone","sand","cobblestone","andesite","granite","diorite","gravel","cobblestone","cobblestone","","","","","","","","","","","","","","","iron_sword","iron_pickaxe","iron_axe","","","","","golden_carrot","water_bucket"]
+  const [giveItem, setGiveItem] = useState("air");
+  const [giveAmount, setGiveAmount] = useState(1);
+  const [inventory, setInventory] = useState<[string, number][]>(
+    new Array(36).fill(["", 0])
   );
+
+  const [pluginFound, setPluginFound] = useState(false);
+
+  function splitToNChunks(array: Array<any>, n: number) {
+    let result = [];
+    for (let i = n; i > 0; i--) {
+      result.push(array.splice(0, Math.ceil(array.length / i)));
+    }
+    return result;
+  }
 
   function checkConnection(ip: string) {
     setMSG1("[loading action check_connection]");
@@ -68,8 +79,8 @@ export default function Home() {
         setMSG1(`Unable to connect to server!`);
       });
   }
-  function itemIcon(item: string) {
-    if(item == null || item == undefined || item.trim() == "") {
+  function itemIcon(item: string|null) {
+    if (item == null || item == undefined || item == "" || item == " ") {
       return "https://upload.wikimedia.org/wikipedia/commons/c/ca/1x1.png";
     }
     return `https://mcapi.marveldc.me/item/${item.replaceAll('minecraft:', '')}?version=1.21&width=128&height=128&fuzzySearch=false`;
@@ -107,9 +118,26 @@ export default function Home() {
       });
   }
   function refreshInventory() {
-    getCommandResult(`rconnect:rconnect-inventory-data ${selPlayer}`, (output: string) => {
-      if(!output.startsWith("[RCONnect]")) {
-        setMessageInvError("Unable to get inventory - do you have the RCONnect plugin installed?")
+    getCommandResult(`rconnect-inventory-data ${selPlayer}`, (output: string) => {
+      if (!output.startsWith("[RCONnect]")) {
+        setMessageInvError("You need the RCONnect-Features plugin - see docs");
+        setPluginFound(false);
+      } else {
+        setPluginFound(true);
+        const result = output.substring(`[RCONnect]`.length);
+        if (result == "pnf") {
+          setMessageInvError("Selected player not online or not found.");
+          return;
+        }
+        const id = parseInt(result);
+        fetch(`http://${IP}:6304/get-inventory?id=${id}`)
+          .then((response) => response.json())
+          .then((data) => {
+            setInventory(data);
+            setMessageInvError("Completed action & refreshed inventory.");
+          }).catch((error) => {
+            console.error("ri- " + error);
+          });
       }
     });
   }
@@ -168,37 +196,37 @@ export default function Home() {
             textColor="inherit"
             fontWeight="lg"
             mb={1}>Player Coordinates</Typography>
-            {selPlayer ? 
-              <>
-                {/* 3 inputs split for X Y Z */}
-                <div style={{display:'flex',width:'300px'}}>
-                  <Input placeholder="X" variant={'plain'} readOnly={true} value={selPlayerCoords[0]} type="number" />
-                  <Input placeholder="Y" variant={'plain'} readOnly={true} value={selPlayerCoords[1]} type="number" />
-                  <Input placeholder="Z" variant={'plain'} readOnly={true} value={selPlayerCoords[2]} type="number" />
-                </div>
-                <Button color="primary" onClick={() => {
-                  getCommandResult(`minecraft:data get entity ${selPlayer} Pos`, (output: string) => {
-                    const position = eval(`${output.replaceAll('d', '').split(": ")[1].split(", ")}`);
-                    setSelPlayerCoords(position);
-                  });
-                }}><Cached style={{ marginRight: '10px' }} />Get Current Position</Button>
-                <br/>
-                <div style={{display:'flex',width:'300px'}}>
-                <Input placeholder="X" onChange={(e)=>{
+          {selPlayer ?
+            <>
+              {/* 3 inputs split for X Y Z */}
+              <div style={{ display: 'flex', width: '300px' }}>
+                <Input placeholder="X" variant={'plain'} readOnly={true} value={selPlayerCoords[0]} type="number" />
+                <Input placeholder="Y" variant={'plain'} readOnly={true} value={selPlayerCoords[1]} type="number" />
+                <Input placeholder="Z" variant={'plain'} readOnly={true} value={selPlayerCoords[2]} type="number" />
+              </div>
+              <Button color="primary" onClick={() => {
+                getCommandResult(`minecraft:data get entity ${selPlayer} Pos`, (output: string) => {
+                  const position = eval(`${output.replaceAll('d', '').split(": ")[1].split(", ")}`);
+                  setSelPlayerCoords(position);
+                });
+              }}><Cached style={{ marginRight: '10px' }} />Get Current Position</Button>
+              <br />
+              <div style={{ display: 'flex', width: '300px' }}>
+                <Input placeholder="X" onChange={(e) => {
                   setCoords([parseInt(e.target.value), coords[1], coords[2]]);
                 }} type="number" />
-                <Input placeholder="Y" onChange={(e)=>{
+                <Input placeholder="Y" onChange={(e) => {
                   setCoords([coords[0], parseInt(e.target.value), coords[2]]);
                 }} type="number" />
-                <Input placeholder="Z" onChange={(e)=>{
+                <Input placeholder="Z" onChange={(e) => {
                   setCoords([coords[0], coords[1], parseInt(e.target.value)]);
                 }} type="number" />
-                </div>
-                <Button color="primary" onClick={() => {
-                  getCommandResult(`minecraft:tp ${selPlayer} ${coords[0]} ${coords[1]} ${coords[2]}`, (output: string) => {});
-                }}><Cached style={{ marginRight: '10px' }} />Teleport Player</Button>
-              </>
-          : <Typography>No player selected</Typography>}
+              </div>
+              <Button color="primary" onClick={() => {
+                getCommandResult(`minecraft:tp ${selPlayer} ${coords[0]} ${coords[1]} ${coords[2]}`, (output: string) => { });
+              }}><Cached style={{ marginRight: '10px' }} />Teleport Player</Button>
+            </>
+            : <Typography>No player selected</Typography>}
         </ModalDialog>
       </Modal>
 
@@ -212,22 +240,46 @@ export default function Home() {
             textColor="inherit"
             fontWeight="lg"
             mb={1}>Player Inventory & Items</Typography>
-            {selPlayer ? 
-              <>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(9, 1fr)',gap:'5px',filter:'blur(3px)'}}>
-              {inventory.map((item, index) => {
-                return <div key={index} style={{width:'30px',height:'30px',border:'1px solid black',backgroundColor:'#333'}}>
-                  <img src={itemIcon(item == null ? 'barrier' : item)} style={{width:'100%',height:'100%'}}/>
-                </div>;
-              })}
-            </div>
-            <Typography>{messageInvError}</Typography>
-            <Button color="primary" onClick={() => {
-              refreshInventory();
-            }}><Cached style={{ marginRight: '10px' }} />Refresh Inventory</Button>
-            <Input placeholder="Item ID (ex. iron_block)" sx={{ width: '100%' }} onChange={(e)=>{setGiveItem(e.target.value)}} endDecorator={<Button onClick={() => {
-              getCommandResult(`minecraft:give ${selPlayer} ${giveItem}`, (output: string) => {});
-            }} color="primary">Give</Button>} startDecorator={<img src={itemIcon(giveItem)} style={{width:'24px',height:'24px'}}/>} />
+          {selPlayer ?
+            <>
+              <Typography>Click a slot to replace it with the selected item below</Typography>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(9, 1fr)', gap: '0px', width: 'fit-content', filter:`${pluginFound?'none':'blur(4px)'}` }}>
+                {splitToNChunks([...inventory.toReversed()], 4).map((row, rowidx) => {
+                  return row.toReversed().map((item: [string,number], idx: number) => {
+                    return <div onClick={()=>{
+                      const slot = (3-rowidx) * 9 + idx;
+                      setMessageInvError("Setting item "+slot+" to "+giveItem+" x"+giveAmount);
+                      getCommandResult(`minecraft:item replace entity ${selPlayer} container.${slot} with ${giveItem} ${giveAmount}`, (output: string) => {
+                        refreshInventory();
+                      });
+                    }} key={idx} style={{ width: '30px', height: '30px', border: '2px solid #777', backgroundColor: '#222', position: 'relative' }}>
+                      <img src={itemIcon(item[0] == "air" ? null : item[0])} style={{ width: '100%', height: '100%' }} />
+                      {item[0] != "air" ? <p style={{fontSize:'12px',position:'absolute',bottom:'1px',right:'1px'}}>{item[1]}</p> : undefined}
+                    </div>;
+                  });
+                })}
+              </div>
+              <Typography>{messageInvError}</Typography>
+              
+              <div style={{ display: 'flex', gap:'3px' }}>
+                <Button color="primary" onClick={() => {
+                  refreshInventory();
+                }}><Cached style={{ marginRight: '5px' }} />Refresh</Button>
+                <Button color="primary" onClick={() => {
+                  getCommandResult(`minecraft:clear ${selPlayer}`, (output: string) => {
+                    refreshInventory();
+                  });
+                }}><DeleteForever style={{ marginRight: '5px' }} />Clear</Button>
+              </div>
+              
+              <div style={{ display: 'flex' }}>
+                <Autocomplete options={items} freeSolo disableClearable placeholder="Item ID (ex. iron_block)" sx={{ width: '100%' }} onChange={(e, v) => { setGiveItem(v as string) }} startDecorator={<img src={itemIcon(giveItem)} style={{ width: '24px', height: '24px' }} />} />
+                <Input defaultValue={1} type="number" sx={{ width: '160px', marginLeft: '5px' }} endDecorator={
+                  <Button onClick={() => {
+                    getCommandResult(`minecraft:give ${selPlayer} ${giveItem} ${giveAmount}`, (output: string) => { });
+                  }} color="primary" disabled={!items.includes(giveItem)}>Give</Button>
+                } />
+              </div>
             </>
             : <Typography>No player selected</Typography>}
         </ModalDialog>
@@ -284,6 +336,33 @@ export default function Home() {
               <Button color="primary" onClick={() => {
                 setInventoryOpen(true);
               }}><Inventory style={{ marginRight: '10px' }} />Inventory</Button>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+              {/* Buttons for Survival, Creative, Spectator, Adventure */}
+              <Button color="primary" onClick={() => {
+                getCommandResult(`minecraft:gamemode survival ${selPlayer}`, (output: string) => { });
+              }}><Hiking style={{marginRight:'10px'}}/>Survival</Button>
+              <Button color="primary" onClick={() => {
+                getCommandResult(`minecraft:gamemode creative ${selPlayer}`, (output: string) => { });
+              }}><ColorLens style={{marginRight:'10px'}}/>Creative</Button>
+              <Button color="primary" onClick={() => {
+                getCommandResult(`minecraft:gamemode spectator ${selPlayer}`, (output: string) => { });
+              }}><Visibility style={{marginRight:'10px'}}/>Spectator</Button>
+              <Button color="primary" onClick={() => {
+                getCommandResult(`minecraft:gamemode adventure ${selPlayer}`, (output: string) => { });
+              }}><DownhillSkiing style={{marginRight:'10px'}}/>Adventure</Button>
+            </div>
+            {/* Another div with buttons for Kick, Ban, Kill */}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+              <Button color="primary" onClick={() => {
+                getCommandResult(`minecraft:kick ${selPlayer}`, (output: string) => { });
+              }}><ExitToApp style={{marginRight:'10px'}}/>Kick</Button>
+              <Button color="primary" onClick={() => {
+                getCommandResult(`minecraft:ban ${selPlayer}`, (output: string) => { });
+              }}><Block style={{marginRight:'10px'}}/>Ban</Button>
+              <Button color="primary" onClick={() => {
+                getCommandResult(`minecraft:kill ${selPlayer}`, (output: string) => { });
+              }}><Gradient style={{marginRight:'10px'}}/>Kill</Button>
             </div>
           </Sheet>
         </div>
