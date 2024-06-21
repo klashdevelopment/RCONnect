@@ -1,0 +1,3 @@
+# This is the configuration if you use the secure RCONnect-Direct plugin.
+[server-ip; 0.0.0.0]
+[rconnect-port; 25565]
