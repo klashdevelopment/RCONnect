@@ -84,7 +84,7 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: "https://gavingogaming.github.io/rconnect"
+      url: "https://pages.klash.dev/rconnect"
     runs-on: ubuntu-latest
     needs: build
     steps:
