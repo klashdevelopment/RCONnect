@@ -9,16 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.13.1",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@minecraft-js/rcon": "^1.1.0",
     "@mui/icons-material": "^5.15.20",
     "@mui/joy": "^5.0.0-beta.36",
+    "@react-three/drei": "^9.107.0",
+    "@react-three/fiber": "^8.16.8",
+    "@react-three/rapier": "^1.4.0",
     "@types/json5": "^2.2.0",
+    "@types/three": "^0.165.0",
     "json5": "^2.2.3",
     "next": "14.2.4",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "three": "^0.165.0"
   },
   "devDependencies": {
     "@types/node": "^20",

@@ -6,6 +6,7 @@ import McText from './mctext/McText.jsx';
 import { Cached, Chat, Inventory, Explore, DeleteForever, Hiking, DownhillSkiing, Money, Visibility, ExitToApp, Block, Gradient, ColorLens, QuestionMark, NightsStay, Brightness6, DarkMode, WbSunny, WbTwilight, RemoveModerator, AddModerator, PersonAdd } from '@mui/icons-material';
 import JSON5 from 'json5';
 import { items, entities } from "./items";
+import { Scene } from "./world";
 
 const colors = [
   ["#000000", "black"],
@@ -523,6 +524,10 @@ export default function Home() {
                 });
               }}>Spawn at every target</Button>
             } />
+          </Sheet><br/>
+          <Sheet variant="outlined" sx={{position:'relative',minHeight:'400px', width: '100%', padding: '20px', borderRadius: '10px' }}>
+            <p style={{top:'-2px',left:'5px',position:'absolute'}}><b>World Explorer</b> - use LMB to rotate, RMB to shift, Scroll to zoom</p>
+            <Scene />
           </Sheet>
         </div>
       </main>
