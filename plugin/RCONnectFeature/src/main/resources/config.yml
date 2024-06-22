@@ -1,0 +1,3 @@
+rconnect:
+  host: localhost
+  port: 6304 # RCONnect Server default port is 6304

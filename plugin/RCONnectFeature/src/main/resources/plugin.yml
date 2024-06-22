@@ -1,0 +1,7 @@
+name: RCONnectFeature
+version: '${project.version}'
+main: dev.klash.rconnectfeature.RCONnectFeature
+api-version: '1.21'
+description: "Connects to RCONnect to enable more features."
+commands:
+  rconnect-inventory-data:
