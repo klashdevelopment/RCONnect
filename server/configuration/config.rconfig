@@ -1,0 +1,4 @@
+# You can select config files here.
+# Duplicate "login.rconfig" and edit the filename here
+# to select another config to use for logins.
+[selected; login.rconfig]

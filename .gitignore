@@ -9,6 +9,9 @@
 # testing
 /coverage
 
+# rconnect
+**/klash.rconfig
+
 # next.js
 /.next/
 /out/

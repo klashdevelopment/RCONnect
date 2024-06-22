@@ -6,7 +6,14 @@ import cors from 'cors';
 
 const app = express();
 app.use(cors());
-const config_file = await fs.readFileSync("configuration/login.rconfig", "utf-8");
+
+const config_config = await fs.readFileSync("configuration/config.rconfig", "utf-8");
+const config_config_obj = await configToObject(config_config);
+let selected = config_config_obj.selected;
+if (selected == undefined || !fs.existsSync("configuration/"+selected)) {
+    selected = "login.rconfig";
+}
+const config_file = await fs.readFileSync("configuration/"+selected, "utf-8");
 const config = await configToObject(config_file);
 const client = new Rcon({
     host: config.ip,
